@@ -23,5 +23,7 @@ sealed class Screen(
                 defaultValue = -1L
             }
         )
+        // Add this helper
+        fun editRoute(taskId: Long) = "add_task?taskId=$taskId"
     }
 }

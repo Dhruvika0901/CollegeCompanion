@@ -4,52 +4,71 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.collegecompanion.data.repository.TaskRepository
 import com.example.collegecompanion.domain.model.Task
-import com.example.collegecompanion.domain.model.Priority
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+// Represents the filter chip selection
+enum class TaskFilter {
+    ALL, ASSIGNMENT, LAB_WORK, MINI_PROJECT
+}
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val repository: TaskRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TaskUiState())
-    val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
+    // ── Search & filter state ─────────────────────────────────────────────────
 
-    val tasks: StateFlow<List<Task>> = repository
-        .getAllTasks()
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _selectedFilter = MutableStateFlow(TaskFilter.ALL)
+    val selectedFilter: StateFlow<TaskFilter> = _selectedFilter.asStateFlow()
+
+    // ── Filtered + searched task list ─────────────────────────────────────────
+
+    // combine() merges 3 flows — any change in any of them triggers a recompute
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val tasks: StateFlow<List<Task>> = combine(
+        repository.getAllTasks(),
+        _searchQuery,
+        _selectedFilter
+    ) { allTasks, query, filter ->
+
+        allTasks
+            // 1. Apply type filter
+            .filter { task ->
+                when (filter) {
+                    TaskFilter.ALL         -> true
+                    TaskFilter.ASSIGNMENT  -> task.taskType == `TaskType.kt`.ASSIGNMENT
+                    TaskFilter.LAB_WORK    -> task.taskType == `TaskType.kt`.LAB_WORK
+                    TaskFilter.MINI_PROJECT -> task.taskType == `TaskType.kt`.MINI_PROJECT
+                }
+            }
+            // 2. Apply search query (title + description, case-insensitive)
+            .filter { task ->
+                if (query.isBlank()) true
+                else task.title.contains(query, ignoreCase = true) ||
+                        task.description.contains(query, ignoreCase = true)
+            }
+    }
         .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            scope        = viewModelScope,
+            started      = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
 
-    private val _filterSubject = MutableStateFlow<String?>(null)
+    // ── Actions ───────────────────────────────────────────────────────────────
 
-    val filteredTasks: StateFlow<List<Task>> = combine(
-        tasks,
-        _filterSubject
-    ) { taskList, subject ->
-        if (subject == null) taskList
-        else taskList.filter { it.subject == subject }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = emptyList()
-    )
-
-    fun setFilter(subject: String?) {
-        _filterSubject.value = subject
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
     }
 
-    fun addTask(task: Task) = viewModelScope.launch {
-        repository.insertTask(task)
-    }
-
-    fun updateTask(task: Task) = viewModelScope.launch {
-        repository.updateTask(task)
+    fun onFilterSelected(filter: TaskFilter) {
+        _selectedFilter.value = filter
     }
 
     fun deleteTask(task: Task) = viewModelScope.launch {
@@ -60,8 +79,3 @@ class TaskViewModel @Inject constructor(
         repository.updateTask(task.copy(isCompleted = !task.isCompleted))
     }
 }
-
-data class TaskUiState(
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)

@@ -20,8 +20,8 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isCompleted = 1 ORDER BY id DESC")  // removed createdAt
     fun getCompletedTasks(): Flow<List<Task>>
 
-    @Query("SELECT * FROM tasks WHERE subject = :subject ORDER BY dueDate ASC")
-    fun getTasksBySubject(subject: String): Flow<List<Task>>
+    @Query("SELECT * FROM tasks WHERE title LIKE :query")
+    fun searchTasks(query: String): Flow<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE dueDate BETWEEN :startOfDay AND :endOfDay")
     fun getTasksDueToday(startOfDay: Long, endOfDay: Long): Flow<List<Task>>
