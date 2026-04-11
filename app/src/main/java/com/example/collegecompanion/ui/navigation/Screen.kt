@@ -11,19 +11,25 @@ sealed class Screen(
     val icon: ImageVector? = null,
     val label: String = ""
 ) {
-    object Dashboard : Screen("dashboard", Icons.Default.Home,         "Dashboard")
-    object Tasks     : Screen("tasks",     Icons.Default.CheckCircle,  "Tasks")
-    object Schedule  : Screen("schedule",  Icons.Default.DateRange,    "Schedule")
-    object Settings  : Screen("settings",  Icons.Default.Settings,     "Settings")
+    // ── Auth flow ──────────────────────────────────────────────
+    object Splash : Screen("splash")
+    object Login  : Screen("login")
 
-    object AddTask : Screen("add_task?taskId={taskId}") {
+    // ── Bottom nav tabs ────────────────────────────────────────
+    object Dashboard : Screen("dashboard", Icons.Default.Home,        "Dashboard")
+    object Tasks     : Screen("tasks",     Icons.Default.CheckCircle, "Tasks")
+    object Schedule  : Screen("schedule",  Icons.Default.DateRange,   "Schedule")
+    object Settings  : Screen("settings",  Icons.Default.Settings,    "Settings")
+
+    // ── Task add/edit ──────────────────────────────────────────
+    object AddTask : Screen("add_task") {
+        val routeWithArgs = "add_task?taskId={taskId}"
         val args = listOf(
             navArgument("taskId") {
-                type         = NavType.LongType
-                defaultValue = -1L
+                type = NavType.IntType
+                defaultValue = -1
             }
         )
-        // Add this helper
-        fun editRoute(taskId: Long) = "add_task?taskId=$taskId"
+        fun editRoute(taskId: Int) = "add_task?taskId=$taskId"
     }
 }

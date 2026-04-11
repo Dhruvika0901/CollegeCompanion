@@ -1,3 +1,4 @@
+// com/example/collegecompanion/ui/tasks/TaskViewModel.kt
 package com.example.collegecompanion.ui.tasks
 
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.example.collegecompanion.domain.model.TaskType
 import javax.inject.Inject
 
 // Represents the filter chip selection
@@ -42,10 +44,10 @@ class TaskViewModel @Inject constructor(
             // 1. Apply type filter
             .filter { task ->
                 when (filter) {
-                    TaskFilter.ALL         -> true
-                    TaskFilter.ASSIGNMENT  -> task.taskType == `TaskType.kt`.ASSIGNMENT
-                    TaskFilter.LAB_WORK    -> task.taskType == `TaskType.kt`.LAB_WORK
-                    TaskFilter.MINI_PROJECT -> task.taskType == `TaskType.kt`.MINI_PROJECT
+                    TaskFilter.ALL          -> true
+                    TaskFilter.ASSIGNMENT   -> task.taskType == TaskType.ASSIGNMENT
+                    TaskFilter.LAB_WORK     -> task.taskType == TaskType.LAB_WORK
+                    TaskFilter.MINI_PROJECT -> task.taskType == TaskType.MINI_PROJECT
                 }
             }
             // 2. Apply search query (title + description, case-insensitive)

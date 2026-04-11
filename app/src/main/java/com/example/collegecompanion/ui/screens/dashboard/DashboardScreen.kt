@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.collegecompanion.domain.model.Priority
+import com.example.collegecompanion.domain.model.TaskType
 import com.example.collegecompanion.domain.model.Task
 import java.text.SimpleDateFormat
 import java.util.*
@@ -105,18 +105,17 @@ private fun TaskSummaryCard(
     onViewAllClick: () -> Unit
 ) {
     DashboardCard(
-        title       = "Tasks",
-        actionLabel = "View all",
+        title         = "Tasks",
+        actionLabel   = "View all",
         onActionClick = onViewAllClick
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatChip("Total",   summary.total,        MaterialTheme.colorScheme.primary)
-            StatChip("Done",    summary.completed,    Color(0xFF4CAF50))
-            StatChip("Pending", summary.pending,      Color(0xFFFF9800))
-            StatChip("Urgent",  summary.highPriority, Color(0xFFF44336))
+            StatChip("Total",   summary.total,     MaterialTheme.colorScheme.primary)
+            StatChip("Done",    summary.completed, Color(0xFF4CAF50))
+            StatChip("Pending", summary.pending,   Color(0xFFFF9800))
         }
     }
 }
@@ -169,28 +168,34 @@ private fun UpcomingTasksCard(
 
 @Composable
 private fun UpcomingTaskRow(task: Task) {
-    // Format epoch millis → "Jan 5" style
     val dateLabel = task.dueDate?.let { millis ->
         SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(millis))
     } ?: "No date"
 
-    // Map Priority enum to color
-    val priorityColor = when (task.priority) {
-        Priority.HIGH   -> Color(0xFFF44336)
-        Priority.MEDIUM -> Color(0xFFFF9800)
-        Priority.LOW    -> Color(0xFF4CAF50)
+    // Map TaskType to color instead of Priority
+    val typeColor = when (task.taskType) {
+        TaskType.GENERAL      -> Color(0xFF9E9E9E)
+        TaskType.ASSIGNMENT   -> Color(0xFF2196F3)
+        TaskType.LAB_WORK     -> Color(0xFF4CAF50)
+        TaskType.MINI_PROJECT -> Color(0xFFFF9800)
+    }
+
+    val typeLabel = when (task.taskType) {
+        TaskType.GENERAL      -> "General"
+        TaskType.ASSIGNMENT   -> "Assignment"
+        TaskType.LAB_WORK     -> "Lab Work"
+        TaskType.MINI_PROJECT -> "Mini Project"
     }
 
     Row(
-        modifier          = Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Small colored priority dot
         Surface(
             modifier = Modifier.size(10.dp),
-            color    = priorityColor,
+            color    = typeColor,
             shape    = MaterialTheme.shapes.extraSmall
         ) {}
 
@@ -203,9 +208,7 @@ private fun UpcomingTaskRow(task: Task) {
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text  = task.priority.name
-                    .lowercase()
-                    .replaceFirstChar { it.uppercase() } + " priority",
+                text  = typeLabel,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

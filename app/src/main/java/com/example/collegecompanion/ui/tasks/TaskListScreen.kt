@@ -1,28 +1,24 @@
 package com.example.collegecompanion.ui.tasks
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.collegecompanion.domain.model.Priority
 import com.example.collegecompanion.domain.model.Task
+import com.example.collegecompanion.domain.model.TaskType
 import com.example.collegecompanion.ui.navigation.Screen
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,72 +34,84 @@ fun TaskListScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("My Tasks", style = MaterialTheme.typography.titleLarge)
+                        val pending = tasks.count { !it.isCompleted }
+                        if (pending > 0) Text(
+                            "$pending pending",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = { Text("Add Task") },
-                icon = { Icon(Icons.Default.Add, contentDescription = "Add Task") },
+            FloatingActionButton(
                 onClick = { navController.navigate(Screen.AddTask.route) }
-            )
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Task")
+            }
         }
-    ) { innerPadding ->
+    ) { padding ->
+        Column(Modifier.padding(padding)) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-
-            Spacer(Modifier.height(12.dp))
-
-            // ── Search Bar ────────────────────────────────────────────────────
-            SearchBar(
-                query    = searchQuery,
-                onQueryChange = viewModel::onSearchQueryChanged
+            // Search
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::onSearchQueryChanged,
+                placeholder = { Text("Search tasks…") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(Modifier.height(12.dp))
-
-            // ── Filter Chips ──────────────────────────────────────────────────
-            FilterChipRow(
-                selected  = selectedFilter,
-                onSelect  = viewModel::onFilterSelected
+            // Filter chips
+            val filters = listOf(
+                TaskFilter.ALL          to "All",
+                TaskFilter.ASSIGNMENT   to "Assignment",
+                TaskFilter.LAB_WORK     to "Lab Work",
+                TaskFilter.MINI_PROJECT to "Mini Project"
             )
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(filters) { (filter, label) ->
+                    FilterChip(
+                        selected = selectedFilter == filter,
+                        onClick  = { viewModel.onFilterSelected(filter) },
+                        label    = { Text(label) }
+                    )
+                }
+            }
 
-            Spacer(Modifier.height(8.dp))
-
-            // ── Task Count label ──────────────────────────────────────────────
-            Text(
-                text  = "${tasks.size} task${if (tasks.size != 1) "s" else ""}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-
-            // ── Task List or Empty State ───────────────────────────────────────
             if (tasks.isEmpty()) {
-                TaskEmptyState(
-                    isFiltered = searchQuery.isNotBlank() ||
-                            selectedFilter != TaskFilter.ALL
-                )
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        if (searchQuery.isBlank()) "No tasks yet. Tap + to add one."
+                        else "No tasks match \"$searchQuery\"",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding      = PaddingValues(bottom = 80.dp) // FAB clearance
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(
-                        items = tasks,
-                        key   = { it.id }   // stable keys = smooth animations
-                    ) { task ->
-                        SwipeToDeleteTaskItem(
-                            task       = task,
-                            onDelete   = { viewModel.deleteTask(task) },
-                            onToggle   = { viewModel.toggleComplete(task) },
-                            onEdit = {
-                                navController.navigate(
-                                    Screen.AddTask.editRoute(task.id)
-                                )
-                            }
+                    items(tasks, key = { it.id }) { task ->
+                        TaskCard(
+                            task     = task,
+                            onToggle = { viewModel.toggleComplete(task) },
+                            onEdit   = {
+                                navController.navigate(Screen.AddTask.editRoute(task.id))
+                            },
+                            onDelete = { viewModel.deleteTask(task) }
                         )
                     }
                 }
@@ -112,194 +120,89 @@ fun TaskListScreen(
     }
 }
 
-// ─── Search Bar ───────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit
-) {
-    OutlinedTextField(
-        value         = query,
-        onValueChange = onQueryChange,
-        modifier      = Modifier.fillMaxWidth(),
-        placeholder   = { Text("Search tasks...") },
-        leadingIcon   = {
-            Icon(Icons.Default.Search, contentDescription = null)
-        },
-        trailingIcon  = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear search")
-                }
-            }
-        },
-        singleLine    = true,
-        shape         = MaterialTheme.shapes.large
-    )
-}
-
-// ─── Filter Chips ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun FilterChipRow(
-    selected: TaskFilter,
-    onSelect: (TaskFilter) -> Unit
-) {
-    // Map each filter to a display label
-    val filters = listOf(
-        TaskFilter.ALL          to "All",
-        TaskFilter.ASSIGNMENT   to "Assignment",
-        TaskFilter.LAB_WORK     to "Lab Work",
-        TaskFilter.MINI_PROJECT to "Mini Project"
-    )
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        filters.forEach { (filter, label) ->
-            FilterChip(
-                selected = selected == filter,
-                onClick  = { onSelect(filter) },
-                label    = { Text(label) }
-            )
-        }
-    }
-}
-
-// ─── Swipe to Delete Wrapper ──────────────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SwipeToDeleteTaskItem(
-    task: Task,
-    onDelete: () -> Unit,
-    onToggle: () -> Unit,
-    onEdit: () -> Unit
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else false
-        }
-    )
-
-    SwipeToDismissBox(
-        state            = dismissState,
-        enableDismissFromStartToEnd = false,    // only swipe left to delete
-        backgroundContent = {
-            // Red delete background shown while swiping
-            val color by animateColorAsState(
-                if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart)
-                    Color(0xFFF44336) else Color.Transparent,
-                label = "swipe_bg"
-            )
-            val scale by animateFloatAsState(
-                if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart)
-                    1f else 0.75f,
-                label = "swipe_icon_scale"
-            )
-            Box(
-                modifier          = Modifier
-                    .fillMaxSize()
-                    .background(color, shape = MaterialTheme.shapes.medium)
-                    .padding(end = 20.dp),
-                contentAlignment  = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector        = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint               = Color.White,
-                    modifier           = Modifier.scale(scale)
-                )
-            }
-        }
-    ) {
-        TaskCard(
-            task     = task,
-            onToggle = onToggle,
-            onEdit   = onEdit
-        )
-    }
-}
-
-// ─── Task Card ────────────────────────────────────────────────────────────────
-
 @Composable
 private fun TaskCard(
     task: Task,
     onToggle: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    Card(
-        onClick   = onEdit,
-        modifier  = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier          = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Completion checkbox
-            Checkbox(
-                checked         = task.isCompleted,
-                onCheckedChange = { onToggle() }
-            )
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { it == SwipeToDismissBoxValue.EndToStart }
+    )
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    }
 
-            Spacer(Modifier.width(8.dp))
-
-            // Task info
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text           = task.title,
-                    style          = MaterialTheme.typography.bodyLarge,
-                    fontWeight     = FontWeight.Medium,
-                    maxLines       = 1,
-                    overflow       = TextOverflow.Ellipsis,
-                    // Strike-through when completed
-                    textDecoration = if (task.isCompleted)
-                        TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (task.isCompleted)
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(Modifier.height(4.dp))
-
-                // Badge row: task type + priority + due date
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment     = Alignment.CenterVertically
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                Modifier.fillMaxSize().padding(4.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    // Task type badge (only show if not GENERAL)
-                    if (task.taskType != `TaskType.kt`.GENERAL) {
-                        TaskTypeBadge(task.taskType)
+                    Box(contentAlignment = Alignment.CenterEnd) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            modifier = Modifier.padding(end = 20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
-
-                    PriorityBadge(task.priority)
-
-                    task.dueDate?.let { millis ->
-                        val formatted = SimpleDateFormat(
-                            "MMM d", Locale.getDefault()
-                        ).format(Date(millis))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector        = Icons.Default.CalendarToday,
-                                contentDescription = null,
-                                modifier           = Modifier.size(12.dp),
-                                tint               = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(Modifier.width(2.dp))
+                }
+            }
+        }
+    ) {
+        Card(
+            onClick = onEdit,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Checkbox(
+                    checked = task.isCompleted,
+                    onCheckedChange = { onToggle() }
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                        color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TaskTypeBadge(task.taskType)
+                        task.subject?.let {
                             Text(
-                                text  = formatted,
+                                it,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        task.dueDate?.let { due ->
+                            val fmt = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(due))
+                            val overdue = due < System.currentTimeMillis()
+                            Text(
+                                fmt,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (overdue && !task.isCompleted)
+                                    MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -309,78 +212,36 @@ private fun TaskCard(
     }
 }
 
-// ─── Badge Composables ────────────────────────────────────────────────────────
-
 @Composable
-private fun TaskTypeBadge(type: `TaskType.kt`) {
-    val (label, color) = when (type) {
-        `TaskType.kt`.ASSIGNMENT   -> "Assignment"   to Color(0xFF2196F3)
-        `TaskType.kt`.LAB_WORK     -> "Lab Work"     to Color(0xFF9C27B0)
-        `TaskType.kt`.MINI_PROJECT -> "Mini Project" to Color(0xFF009688)
-        `TaskType.kt`.GENERAL      -> "General"      to Color(0xFF607D8B)
-    }
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = MaterialTheme.shapes.extraSmall
-    ) {
-        Text(
-            text     = label,
-            style    = MaterialTheme.typography.labelSmall,
-            color    = color,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+private fun TaskTypeBadge(type: TaskType) {
+    val (label, container, content) = when (type) {
+        TaskType.GENERAL      -> Triple(
+            "General",
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TaskType.ASSIGNMENT   -> Triple(
+            "Assignment",
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.primary
+        )
+        TaskType.LAB_WORK     -> Triple(
+            "Lab Work",
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.secondary
+        )
+        TaskType.MINI_PROJECT -> Triple(
+            "Mini Project",
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.tertiary
         )
     }
-}
-
-@Composable
-private fun PriorityBadge(priority: Priority) {
-    val (label, color) = when (priority) {
-        Priority.HIGH   -> "High"   to Color(0xFFF44336)
-        Priority.MEDIUM -> "Medium" to Color(0xFFFF9800)
-        Priority.LOW    -> "Low"    to Color(0xFF4CAF50)
-    }
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = MaterialTheme.shapes.extraSmall
-    ) {
+    Surface(color = container, shape = RoundedCornerShape(20.dp)) {
         Text(
-            text     = label,
-            style    = MaterialTheme.typography.labelSmall,
-            color    = color,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        )
-    }
-}
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
-@Composable
-private fun TaskEmptyState(isFiltered: Boolean) {
-    Column(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .padding(top = 64.dp),
-        horizontalAlignment   = Alignment.CenterHorizontally,
-        verticalArrangement   = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector        = if (isFiltered) Icons.Default.SearchOff
-            else Icons.Default.AssignmentLate,
-            contentDescription = null,
-            modifier           = Modifier.size(64.dp),
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-        )
-        Text(
-            text  = if (isFiltered) "No tasks match your search"
-            else "No tasks yet",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text  = if (isFiltered) "Try a different filter or search term"
-            else "Tap the button below to add your first task",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            label,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = content
         )
     }
 }

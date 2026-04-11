@@ -4,11 +4,19 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }
+
+//allprojects {
+//    repositories {
+//        google()
+//        mavenCentral()
+//    }
+//}
 
 android {
     namespace = "com.example.collegecompanion"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.collegecompanion"
@@ -43,6 +51,18 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+// Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+
+// Firebase Auth — no version, BoM controls it
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+// Google Sign-In + Credential Manager
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("androidx.credentials:credentials:1.5.0-beta01")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0-beta01")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))

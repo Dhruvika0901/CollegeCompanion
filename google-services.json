@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "770155174987",
+    "project_id": "campuscompanionmad",
+    "storage_bucket": "campuscompanionmad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770155174987:android:2a992819042a40849701ce",
+        "android_client_info": {
+          "package_name": "com.example.collegecompanion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "770155174987-ppddufluf3s2ip1s2ni7foeb8ouj2eti.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.collegecompanion",
+            "certificate_hash": "178264c8ece3d92944874f488198c379f5f783ce"
+          }
+        },
+        {
+          "client_id": "770155174987-oji1ktvu1nbluoln8520353fcjn69upo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTqdl5zST5gI3Uynq8Sh7MEthERYFSKwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "770155174987-oji1ktvu1nbluoln8520353fcjn69upo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

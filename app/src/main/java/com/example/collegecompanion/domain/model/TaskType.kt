@@ -6,3 +6,6 @@ enum class TaskType {
     LAB_WORK,
     MINI_PROJECT
 }
+
+
+

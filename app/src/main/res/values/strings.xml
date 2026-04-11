@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">College Companion</string>
+    <string name="default_web_client_id">770155174987-oji1ktvu1nbluoln8520353fcjn69upo.apps.googleusercontent.com</string>
 </resources>
+

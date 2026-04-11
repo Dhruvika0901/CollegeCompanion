@@ -1,85 +1,65 @@
 package com.example.collegecompanion.ui.tasks
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.collegecompanion.data.repository.TaskRepository
-import com.example.collegecompanion.domain.model.Priority
 import com.example.collegecompanion.domain.model.Task
+import com.example.collegecompanion.domain.model.TaskType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEditTaskViewModel @Inject constructor(
     private val repository: TaskRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle           // ← Hilt injects this automatically
 ) : ViewModel() {
 
-    private val taskId: Long? = savedStateHandle.get<Long>("taskId")
-        ?.takeIf { it != -1L }
+    // Reads "taskId" from the nav route  "add_task?taskId={taskId}"
+    // defaultValue = -1 means "new task"
+    private val taskId: Int = savedStateHandle.get<Int>("taskId") ?: -1
+    val isEditing: Boolean get() = taskId != -1
 
-    val isEditing: Boolean get() = taskId != null
-
-    private val _formState = MutableStateFlow(TaskFormState())
-    val formState: StateFlow<TaskFormState> = _formState.asStateFlow()
+    var title       by mutableStateOf("")
+    var description by mutableStateOf("")
+    var dueDate     by mutableStateOf<Long?>(null)
+    var taskType    by mutableStateOf(TaskType.ASSIGNMENT)
+    var subject     by mutableStateOf("")
+    var titleError  by mutableStateOf(false)
 
     init {
-        taskId?.let { id ->
+        if (isEditing) {
             viewModelScope.launch {
-                repository.getTaskById(id)?.let { task ->
-                    _formState.value = TaskFormState(
-                        title    = task.title,
-                        subject  = task.subject,
-                        dueDate  = task.dueDate,
-                        priority = task.priority
-                    )
+                repository.getTaskById(taskId)?.let { t ->
+                    title       = t.title
+                    description = t.description
+                    dueDate     = t.dueDate
+                    taskType    = t.taskType
+                    subject     = t.subject ?: ""
                 }
             }
         }
     }
 
-    fun onTitleChange(title: String) {
-        _formState.update { it.copy(title = title) }
-    }
-
-    fun onSubjectChange(subject: String) {
-        _formState.update { it.copy(subject = subject) }
-    }
-
-    fun onDueDateChange(millis: Long?) {
-        _formState.update { it.copy(dueDate = millis) }
-    }
-
-    fun onPriorityChange(priority: Priority) {
-        _formState.update { it.copy(priority = priority) }
-    }
-
-    fun saveTask(onSuccess: () -> Unit) = viewModelScope.launch {
-        val state = _formState.value
-        if (state.title.isBlank()) {
-            _formState.update { it.copy(titleError = "Title is required") }
-            return@launch
+    fun save(onSuccess: () -> Unit) {
+        if (title.isBlank()) { titleError = true; return }
+        viewModelScope.launch {
+            repository.insertTask(
+                Task(
+                    id          = if (isEditing) taskId else 0,
+                    title       = title.trim(),
+                    description = description.trim(),
+                    dueDate     = dueDate,
+                    taskType    = taskType,
+                    subject     = subject.trim().takeIf { it.isNotBlank() },
+                    isCompleted = false
+                )
+            )
+            onSuccess()
         }
-        val task = Task(
-            id          = taskId ?: 0L,
-            title       = state.title,
-            subject     = state.subject,
-            dueDate     = state.dueDate,
-            priority    = state.priority,
-            isCompleted = false
-        )
-        if (taskId == null) repository.insertTask(task)
-        else                repository.updateTask(task)
-        onSuccess()
     }
 }
-
-data class TaskFormState(
-    val title      : String   = "",
-    val subject    : String   = "",
-    val dueDate    : Long?    = null,
-    val priority   : Priority = Priority.MEDIUM,
-    val titleError : String?  = null
-)
