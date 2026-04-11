@@ -51,7 +51,7 @@ fun TaskListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddTask.route) }
+                onClick = { navController.navigate(Screen.AddTask.newTaskRoute) }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Task")
             }

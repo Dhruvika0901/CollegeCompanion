@@ -24,6 +24,7 @@ sealed class Screen(
     // ── Task add/edit ──────────────────────────────────────────
     object AddTask : Screen("add_task") {
         val routeWithArgs = "add_task?taskId={taskId}"
+        val newTaskRoute  = "add_task?taskId=-1"        // ← add this
         val args = listOf(
             navArgument("taskId") {
                 type = NavType.IntType
