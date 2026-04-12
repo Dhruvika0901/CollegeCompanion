@@ -4,6 +4,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import androidx.compose.foundation.layout.padding
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.example.collegecompanion.ui.screens.dashboard.DashboardScreen
@@ -37,7 +38,7 @@ fun CollegeCompanionApp() {
         NavHost(
             navController    = navController,
             startDestination = Screen.Splash.route,  // ← changed from Dashboard
-            modifier         = Modifier
+            modifier         = Modifier.padding(innerPadding)
         ) {
             // ── Auth flow ──────────────────────────────────────────────
             composable(Screen.Splash.route) {
