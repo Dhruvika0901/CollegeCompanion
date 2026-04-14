@@ -16,10 +16,8 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth {
-        return FirebaseAuth.getInstance()
-    }
-}  // ← this was missing
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+}
 
 @Module
 @InstallIn(SingletonComponent::class)

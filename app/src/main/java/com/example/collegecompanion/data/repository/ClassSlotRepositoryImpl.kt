@@ -1,4 +1,3 @@
-// com/example/collegecompanion/data/repository/ClassSlotRepository.kt
 package com.example.collegecompanion.data.repository
 
 import com.example.collegecompanion.data.local.ClassSlotDao
@@ -12,6 +11,7 @@ class ClassSlotRepositoryImpl @Inject constructor(
     override fun getSlotsByDay(day: Int): Flow<List<ClassSlot>> = dao.getSlotsByDay(day)
     override fun getAllSlots(): Flow<List<ClassSlot>> = dao.getAllSlots()
     override suspend fun insertSlot(slot: ClassSlot) = dao.insertSlot(slot)
+    override suspend fun getLastSlotForDay(day: Int): ClassSlot? = dao.getLastSlotForDay(day)  // ← Int
     override suspend fun updateSlot(slot: ClassSlot) = dao.updateSlot(slot)
     override suspend fun deleteSlot(slot: ClassSlot) = dao.deleteSlot(slot)
 }

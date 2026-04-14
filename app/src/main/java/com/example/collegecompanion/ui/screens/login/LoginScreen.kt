@@ -11,12 +11,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+
+/**
+ * UI State for the Login Screen
+ */
+//sealed interface LoginUiState {
+//    object Idle : LoginUiState
+//    object Loading : LoginUiState
+//    object Success : LoginUiState
+//    data class Error(val message: String) : LoginUiState
+//}
 
 @Composable
 fun LoginScreen(
@@ -26,13 +35,17 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    // Fade-in animation for the logo and content
     val alpha = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
-        alpha.animateTo(1f, animationSpec = tween(700))
+        alpha.animateTo(1f, animationSpec = tween(800))
     }
 
+    // Navigation trigger on success
     LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) onLoginSuccess()
+        if (uiState is LoginUiState.Success) {
+            onLoginSuccess()
+        }
     }
 
     Box(
@@ -49,80 +62,106 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Logo
+            // --- Logo Section ---
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "CC",
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontSize = 28.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // --- Welcome Text ---
             Text(
-                text = "Welcome to\nCollegeCompanion",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
+                text = "CollegeCompanion",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Text(
-                text = "Sign in to sync your tasks, schedule,\nand attendance across devices.",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Your academic life, organized.\nSign in to sync your data.",
+                style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 24.sp
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Google Sign-In button
-            OutlinedButton(
+            // --- Google Sign-In Button ---
+            Button(
                 onClick = { viewModel.signInWithGoogle(context) },
                 enabled = uiState !is LoginUiState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
             ) {
                 if (uiState is LoginUiState.Loading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 3.dp,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 } else {
-                    // Swap with actual Google icon drawable if available
+                    // Placeholder for Google Icon
                     Text(
                         text = "G",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Continue with Google",
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
 
-            // Error state
+            // --- Error Message Display ---
             if (uiState is LoginUiState.Error) {
-                Text(
-                    text = (uiState as LoginUiState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text(
+                        text = (uiState as LoginUiState.Error).message,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
+
+        // --- Bottom Footer ---
+        Text(
+            text = "By continuing, you agree to our Terms",
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline
+        )
     }
 }

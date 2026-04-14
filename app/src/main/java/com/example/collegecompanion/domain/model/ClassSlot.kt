@@ -1,3 +1,4 @@
+// com/example/collegecompanion/data/repository/ClassSlot.kt
 package com.example.collegecompanion.domain.model
 
 import androidx.room.Entity

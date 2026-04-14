@@ -1,3 +1,4 @@
+//LoginViewModel.kt
 package com.example.collegecompanion.ui.screens.login
 
 import android.content.Context
@@ -8,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 
 sealed class LoginUiState {
@@ -22,8 +24,9 @@ class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    // ✅ Correct
     val isAlreadyLoggedIn: Boolean
-        get() = authRepository.currentUser != null
+        get() = FirebaseAuth.getInstance().currentUser != null
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState

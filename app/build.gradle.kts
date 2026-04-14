@@ -4,15 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    id("com.google.gms.google-services") version "4.4.4" apply false
+    id("com.google.gms.google-services") version "4.4.4"  // ← removed "apply false"
 }
 
-//allprojects {
-//    repositories {
-//        google()
-//        mavenCentral()
-//    }
-//}
 
 android {
     namespace = "com.example.collegecompanion"
@@ -64,6 +58,8 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0-beta01")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -97,6 +93,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)

@@ -1,3 +1,4 @@
+// com/example/collegecompanion/ui/navigation/CollegeCompanionApp.kt
 package com.example.collegecompanion.ui.navigation
 
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ sealed class Screen(
     object Schedule  : Screen("schedule",  Icons.Default.DateRange,   "Schedule")
     object Settings  : Screen("settings",  Icons.Default.Settings,    "Settings")
 
+    object Attendance : Screen("attendance")
     // ── Task add/edit ──────────────────────────────────────────
     object AddTask : Screen("add_task") {
         val routeWithArgs = "add_task?taskId={taskId}"

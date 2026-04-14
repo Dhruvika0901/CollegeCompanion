@@ -12,6 +12,9 @@ import com.example.collegecompanion.data.repository.ClassSlotRepository
 import com.example.collegecompanion.data.repository.ClassSlotRepositoryImpl
 import com.example.collegecompanion.data.repository.TaskRepository
 import com.example.collegecompanion.data.repository.TaskRepositoryImpl
+import com.example.collegecompanion.data.local.AttendanceDao
+import com.example.collegecompanion.data.repository.AttendanceRepository
+import com.example.collegecompanion.data.repository.AttendanceRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -73,17 +76,16 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL(
-            "ALTER TABLE tasks ADD COLUMN subject TEXT"
-        )
-    }
-}
+//val MIGRATION_3_4 = object : Migration(3, 4) {
+//    override fun migrate(database: SupportSQLiteDatabase) {
+//        database.execSQL(
+//            "ALTER TABLE tasks ADD COLUMN subject TEXT"
+//        )
+//    }
+//}
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -92,20 +94,26 @@ object DatabaseModule {
             AppDatabase::class.java,
             "college_companion_db"
         )
-//            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-            .fallbackToDestructiveMigration(dropAllTables = true)  // updated signature
-            .addMigrations(AppDatabase.MIGRATION_3_4)
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5
+            )
+            // Remove fallbackToDestructiveMigration entirely — it's hiding crashes and wiping data
             .build()
 
     @Provides
     @Singleton
-    fun provideTaskDao(database: AppDatabase): TaskDao =
-        database.taskDao()
+    fun provideTaskDao(database: AppDatabase): TaskDao = database.taskDao()
 
     @Provides
     @Singleton
-    fun provideClassSlotDao(database: AppDatabase): ClassSlotDao =
-        database.classSlotDao()
+    fun provideClassSlotDao(database: AppDatabase): ClassSlotDao = database.classSlotDao()
+
+    @Provides
+    @Singleton
+    fun provideAttendanceDao(database: AppDatabase): AttendanceDao = database.attendanceDao()  // ← moved here, added @Singleton
 }
 
 @Module
@@ -114,13 +122,14 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindTaskRepository(
-        impl: TaskRepositoryImpl
-    ): TaskRepository
+    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
 
     @Binds
     @Singleton
-    abstract fun bindClassSlotRepository(
-        impl: ClassSlotRepositoryImpl
-    ): ClassSlotRepository
+    abstract fun bindClassSlotRepository(impl: ClassSlotRepositoryImpl): ClassSlotRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAttendanceRepository(impl: AttendanceRepositoryImpl): AttendanceRepository  // ← moved here
 }
+

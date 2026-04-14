@@ -1,4 +1,3 @@
-// com/example/collegecompanion/ui/screens/schedule/ScheduleViewModel.kt
 package com.example.collegecompanion.ui.screens.schedule
 
 import androidx.lifecycle.ViewModel
@@ -40,7 +39,10 @@ class ScheduleViewModel @Inject constructor(
         )
 
     fun selectDay(day: Int) { _selectedDay.value = day }
-    fun addSlot(slot: ClassSlot) = viewModelScope.launch { repository.insertSlot(slot) }
+    fun addSlot(slot: ClassSlot)    = viewModelScope.launch { repository.insertSlot(slot) }
     fun updateSlot(slot: ClassSlot) = viewModelScope.launch { repository.updateSlot(slot) }
     fun deleteSlot(slot: ClassSlot) = viewModelScope.launch { repository.deleteSlot(slot) }
+
+    suspend fun getLastSlotForDay(day: Int): ClassSlot? =
+        repository.getLastSlotForDay(day)
 }

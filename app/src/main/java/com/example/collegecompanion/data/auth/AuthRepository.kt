@@ -1,3 +1,4 @@
+//AuthRepository.kt
 package com.example.collegecompanion.data.auth
 
 import android.content.Context
