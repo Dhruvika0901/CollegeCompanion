@@ -1,4 +1,4 @@
-// com/example/collegecompanion/ui/navigation/CollegeCompanionApp.kt
+// com/example/collegecompanion/ui/navigation/Screen.kt
 package com.example.collegecompanion.ui.navigation
 
 import androidx.compose.material.icons.Icons

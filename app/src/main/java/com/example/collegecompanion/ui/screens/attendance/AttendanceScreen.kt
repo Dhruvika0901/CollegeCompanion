@@ -1,3 +1,4 @@
+//AttendanceScreen.kt - Main UI for attendance tracking, showing overall stats and per-subject cards with marking buttons.
 package com.example.collegecompanion.ui.screens.attendance
 
 import androidx.compose.animation.animateColorAsState

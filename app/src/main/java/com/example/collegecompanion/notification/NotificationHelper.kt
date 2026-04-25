@@ -1,47 +1,56 @@
-// com/example/collegecompanion/notification/NotificationHelper.kt
+//NotificationHelper.kt
 package com.example.collegecompanion.notification
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.example.collegecompanion.R
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object NotificationHelper {
+@Singleton
+class NotificationHelper @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) {
+    companion object {
+        const val CHANNEL_ID   = "task_reminders"
+        const val CHANNEL_NAME = "Task Reminders"
 
-    private const val CHANNEL_ID   = "deadline_reminders"
-    private const val CHANNEL_NAME = "Deadline Reminders"
+        fun createChannel(context: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH
+                )
+                channel.description = "Reminds you about upcoming task deadlines"
 
-    fun createChannel(context: Context) {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Notifies you when a task deadline is approaching"
+                val manager = context.getSystemService(NotificationManager::class.java)
+                manager.createNotificationChannel(channel)
+            }
         }
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(channel)
     }
 
-    fun showDeadlineNotification(context: Context, taskTitle: String, daysLeft: Int, notifId: Int) {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =
+        context.getSystemService(NotificationManager::class.java)
 
-        val body = when (daysLeft) {
-            0    -> "\"$taskTitle\" is due TODAY!"
-            1    -> "\"$taskTitle\" is due TOMORROW"
-            else -> "\"$taskTitle\" is due in $daysLeft days"
+    fun showTaskReminder(taskId: Int, title: String, daysUntilDue: Int) {
+        val message = when (daysUntilDue) {
+            0    -> "\"$title\" is due today!"
+            1    -> "\"$title\" is due tomorrow"
+            else -> "\"$title\" is due in $daysUntilDue days"
         }
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("📚 Deadline Reminder")
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentTitle("Task Reminder")
+            .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
 
-        manager.notify(notifId, notification)
+        notificationManager.notify(taskId, notification)
     }
 }

@@ -12,8 +12,8 @@ import com.example.collegecompanion.domain.model.AttendanceRecord
 
 @Database(
     entities = [Task::class, ClassSlot::class, AttendanceRecord::class],
-    version = 5,
-    exportSchema = false
+    version = 6,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -45,6 +45,13 @@ abstract class AppDatabase : RoomDatabase() {
                         status TEXT NOT NULL
                     )
                     """.trimIndent()
+                )
+            }
+        }
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE tasks ADD COLUMN reminderDaysBefore INTEGER"
                 )
             }
         }

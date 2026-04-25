@@ -1,3 +1,4 @@
+//LoginScreen.kt
 package com.example.collegecompanion.ui.screens.login
 
 import androidx.compose.animation.core.*

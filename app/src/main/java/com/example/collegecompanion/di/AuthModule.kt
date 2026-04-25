@@ -1,3 +1,4 @@
+//AuthModule.kt
 package com.example.collegecompanion.di
 
 import com.example.collegecompanion.data.auth.AuthRepository

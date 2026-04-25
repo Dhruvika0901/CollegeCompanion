@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
     ) { granted ->
         if (granted) {
             // Permission just granted — start the default schedule (8:00 AM, 1 day before)
-            notificationScheduler.schedule(hourOfDay = 8, minuteOfDay = 0)
+            notificationScheduler.schedule(hourOfDay = 8, minute = 0)
         }
     }
 
@@ -41,11 +41,14 @@ class MainActivity : ComponentActivity() {
         NotificationHelper.createChannel(this)
 
         // 2. Request POST_NOTIFICATIONS permission on Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
+        if (Build.VERSION.SDK_INT >= 33) {
+            requestPermissions(
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                1
+            )
+        }else {
             // Below Android 13, permission not needed — schedule directly
-            notificationScheduler.schedule(hourOfDay = 8, minuteOfDay = 0)
+            notificationScheduler.schedule(hourOfDay = 8, minute = 0)
         }
 
         setContent {

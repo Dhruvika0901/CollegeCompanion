@@ -1,3 +1,4 @@
+//CollegeCompanionApp.kt
 package com.example.collegecompanion.ui.navigation
 
 import androidx.compose.foundation.layout.padding

@@ -1,3 +1,4 @@
+//AttendanceRecord.kt
 package com.example.collegecompanion.domain.model
 
 import androidx.room.Entity

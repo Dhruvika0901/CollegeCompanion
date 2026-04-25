@@ -19,6 +19,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import com.example.collegecompanion.notification.NotificationWorker
 import androidx.hilt.navigation.compose.hiltViewModel
 
 private val PageBg      = Color(0xFFF3F0FF)
@@ -33,7 +38,16 @@ fun SettingsScreen(
     onSignOut: () -> Unit, // Callback for navigation
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    Button(onClick = {
+        val request = OneTimeWorkRequestBuilder<NotificationWorker>().build()
+        WorkManager.getInstance(context).enqueue(request)
+    }) {
+        Text("Test Notification Now")
+    }
 
     // Listen for the sign-out event from ViewModel
     LaunchedEffect(Unit) {
@@ -146,7 +160,7 @@ fun SettingsScreen(
                         onClick = { viewModel.signOut() },
                         modifier = Modifier.clip(CircleShape).background(Color(0xFFE09000))
                     ) {
-                        Icon(Icons.Default.ExitToApp, "Sign out", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, "Sign out", tint = Color.White)
                     }
                 }
             }

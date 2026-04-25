@@ -14,5 +14,6 @@ data class Task(
     val dueDate: Long? = null,
     val taskType: TaskType = TaskType.ASSIGNMENT,
     val subject: String? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val reminderDaysBefore: Int? = null
 )
