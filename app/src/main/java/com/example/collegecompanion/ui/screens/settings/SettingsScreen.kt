@@ -1,5 +1,8 @@
 package com.example.collegecompanion.ui.screens.settings
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,49 +10,44 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import com.example.collegecompanion.notification.NotificationWorker
-import androidx.hilt.navigation.compose.hiltViewModel
 
-private val PageBg      = Color(0xFFF3F0FF)
-private val CardPurple  = Color(0xFFDDD5FB)
-private val CardGreen   = Color(0xFFCCF0DC)
-private val CardPeach   = Color(0xFFFADDCC)
-private val CardBlue    = Color(0xFFCCDEFA)
-private val CardYellow  = Color(0xFFFAEECC)
+private val PageBg     = Color(0xFFF3F0FF)
+private val CardPurple = Color(0xFFDDD5FB)
+private val CardGreen  = Color(0xFFCCF0DC)
+private val CardPeach  = Color(0xFFFADDCC)
+private val CardBlue   = Color(0xFFCCDEFA)
+private val CardYellow = Color(0xFFFAEECC)
 
 @Composable
 fun SettingsScreen(
-    onSignOut: () -> Unit, // Callback for navigation
+    onSignOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    Button(onClick = {
-        val request = OneTimeWorkRequestBuilder<NotificationWorker>().build()
-        WorkManager.getInstance(context).enqueue(request)
-    }) {
-        Text("Test Notification Now")
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) viewModel.fetchLocation()
     }
 
-    // Listen for the sign-out event from ViewModel
     LaunchedEffect(Unit) {
         viewModel.signOutEvent.collect {
             onSignOut()
@@ -78,6 +76,14 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(2.dp))
 
+            // --- Test Notification ---
+            Button(onClick = {
+                val request = OneTimeWorkRequestBuilder<NotificationWorker>().build()
+                WorkManager.getInstance(context).enqueue(request)
+            }) {
+                Text("Test Notification Now")
+            }
+
             // --- Profile ---
             PastelCard(color = CardPurple) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -103,7 +109,10 @@ fun SettingsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF27AE60)),
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF27AE60)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.Notifications, null, tint = Color.White, modifier = Modifier.size(20.dp))
@@ -112,7 +121,6 @@ fun SettingsScreen(
                         Text("Notifications", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D3B24))
                     }
                     HorizontalDivider(color = Color(0x330D3B24), thickness = 0.5.dp)
-
                     Text("Reminder time", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1A6B3A))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Morning" to 8, "Afternoon" to 13, "Evening" to 18).forEach { (label, hour) ->
@@ -120,7 +128,10 @@ fun SettingsScreen(
                                 selected = uiState.hourOfDay == hour,
                                 onClick = { viewModel.setNotificationHour(hour) },
                                 label = { Text(label) },
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Color(0xFF27AE60), selectedLabelColor = Color.White)
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFF27AE60),
+                                    selectedLabelColor = Color.White
+                                )
                             )
                         }
                     }
@@ -134,8 +145,58 @@ fun SettingsScreen(
                         Text("Attendance", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C1A00))
                         Text("75% threshold warning", fontSize = 13.sp, color = Color(0xFF9C4020))
                     }
-                    Box(Modifier.clip(RoundedCornerShape(20.dp)).background(Color(0xFFD85A30)).padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFD85A30))
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
                         Text("Active", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
+            // --- Location / GPS ---
+            PastelCard(color = CardBlue) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF1565C0)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text("Location", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0A2A5C))
+                    }
+
+                    HorizontalDivider(color = Color(0x330A2A5C), thickness = 0.5.dp)
+
+                    val location = uiState.currentLocation
+                    if (location != null) {
+                        InfoRow("Coordinates", location, Color(0xFF0A2A5C))
+                    } else {
+                        Text("No location fetched yet", fontSize = 13.sp, color = Color(0xFF0A2A5C).copy(alpha = 0.6f))
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                        ) {
+                            Text(if (uiState.locationEnabled) "Refresh" else "Enable GPS")
+                        }
+
+                        if (uiState.locationEnabled) {
+                            OutlinedButton(onClick = { viewModel.clearLocation() }) {
+                                Text("Disable")
+                            }
+                        }
                     }
                 }
             }
@@ -158,7 +219,9 @@ fun SettingsScreen(
                     }
                     IconButton(
                         onClick = { viewModel.signOut() },
-                        modifier = Modifier.clip(CircleShape).background(Color(0xFFE09000))
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(Color(0xFFE09000))
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, "Sign out", tint = Color.White)
                     }
@@ -170,7 +233,11 @@ fun SettingsScreen(
 
 @Composable
 private fun PastelCard(color: Color, content: @Composable ColumnScope.() -> Unit) {
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = color)) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
+    ) {
         Column(Modifier.padding(20.dp), content = content)
     }
 }
